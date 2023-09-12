@@ -1,7 +1,5 @@
 library(shiny)
-library(reactable)
-library(dplyr)
-library(readr)
+library(DT)
 library(purrr)
 
 local_file <- "data/mtcars.csv"
@@ -9,8 +7,9 @@ local_file <- "data/mtcars.csv"
 source("utilis/funcs.R")
 
 ui <- fluidPage(
-  reactableOutput("table")
+  dataTableOutput("mytable")
 )
+
 
 server <- function(input, output, session) {
   
@@ -18,14 +17,11 @@ server <- function(input, output, session) {
     read_csv(local_file)  
   )
   
-  output$table <- renderReactable({
-    reactable(data(), onClick = "select", selection = "single")
-  })
+  output$mytable <- renderDT({
+    datatable(data(),selection = "single")
+  }, server = FALSE)
   
-  selected <- reactive(getReactableState("table", "selected"))
-  
-  
-  observeEvent(req(selected()), {
+  observeEvent(req(input$mytable_rows_selected), {
     showModal(modalDialog(
       title = "Edit row",
       data_input(data()),
@@ -52,7 +48,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$update, {
     df <- data()
-    df[selected(),] <- map(names(df), ~input[[.x]]) 
+    df[input$mytable_rows_selected,] <- map(names(df), ~input[[.x]]) 
     write_csv(df, local_file)
     data(df)
     removeModal()
@@ -60,12 +56,12 @@ server <- function(input, output, session) {
   
   observeEvent(input$delete, {
     df <- data()
-    df <- df[-selected(), ]
+    df <- df[-input$mytable_rows_selected, ]
     write_csv(df, local_file)
     data(df)
     removeModal()
-  })
+  }) 
   
-}
+} 
 
-shinyApp(ui, server)
+shinyApp(ui = ui, server = server)
