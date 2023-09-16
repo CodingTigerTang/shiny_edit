@@ -28,7 +28,7 @@ server <- function(input, output, session) {
   observeEvent(req(selected()), {
     showModal(modalDialog(
       title = "Edit row",
-      data_input(data()),
+      data_input(data()[selected(),]),
       easyClose = TRUE,
       footer = tagList(
         modalButton("Cancel"),
